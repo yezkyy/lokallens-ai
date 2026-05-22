@@ -47,48 +47,49 @@ export function AuthBranding({ children, activeTab }: AuthBrandingProps) {
 
       {/* ── SISI KANAN: Grid-Paper Branding Panel (Slide Out ke Kanan) ── */}
       <div
-          className={`hidden lg:flex w-[55%] flex-col absolute top-0 bottom-0 right-0 bg-white items-center justify-center p-12 transition-all duration-500 ease-in-out z-0 ${
+          className={`hidden lg:flex w-[55%] flex-col absolute top-0 bottom-0 right-0 bg-white items-center justify-center p-16 transition-all duration-500 ease-in-out z-0 ${
           isDaftar ? "translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"
           }`}
           style={{
           backgroundImage: `
-              linear-gradient(to right, #E2E8F0 1px, transparent 1.5px),
-              linear-gradient(to bottom, #E2E8F0 1px, transparent 1.5px)
+              linear-gradient(to right, #E2E8F0 1.5px, transparent 1.5px),
+              linear-gradient(to bottom, #E2E8F0 1.5px, transparent 1.5px)
           `,
           backgroundSize: "24px 24px",
           }}
       >
-          <div className="w-full max-w-lg flex flex-col">
+          <div className="w-full max-w-2xl flex flex-col">
             {/* Teks Sambutan Branding */}
-            <div className="mb-10">
-                <p className="text-[#2563EB] text-[14px] md:text-[16px] font-medium mb-1 tracking-wide">
+            <div className="mb-12">
+                <p className="text-[#2563EB] text-[16px] md:text-[18px] font-medium mb-2 tracking-wide">
                 Selamat datang di
                 </p>
-                <h1 className="text-4xl md:text-[56px] font-bold text-[#1D4ED8] tracking-tight leading-tight mb-4">
+                <h1 className="text-5xl md:text-[72px] font-bold text-[#1D4ED8] tracking-tight leading-none mb-6">
                 LokalLens AI<span className="text-[#2563EB]">.</span>
                 </h1>
-                <p className="text-[#2563EB] font-medium text-xs md:text-[15px] max-w-sm leading-relaxed opacity-80">
+                <p className="text-[#2563EB] font-medium text-sm md:text-[18px] max-w-md leading-relaxed">
                 Satu tempat untuk segala kebutuhan visual dan promosi usahamu.
                 </p>
             </div>
 
             {/* Block Placeholder Gambar Utama */}
-            <div className="w-full mb-10 flex flex-col items-center">
-                <div className="w-full aspect-[16/9] bg-[#94A3B8] rounded-[20px] shadow-inner" />
-                <div className="flex justify-center gap-1.5 mt-6">
-                  <span className="w-10 h-1.5 bg-[#2563EB] rounded-full transition-all" />
-                  <span className="w-10 h-1.5 bg-[#BFDBFE] rounded-full transition-all" />
-                  <span className="w-10 h-1.5 bg-[#BFDBFE] rounded-full transition-all" />
+            <div className="w-full mb-12 flex flex-col items-center">
+                <div className="w-full aspect-[16/10] bg-[#94A3B8] rounded-[24px] shadow-inner" />
+                <div className="flex justify-center gap-2 mt-8">
+                  <span className="w-12 h-1.5 bg-[#2563EB] rounded-full transition-all" />
+                  <span className="w-12 h-1.5 bg-[#BFDBFE] rounded-full transition-all" />
+                  <span className="w-12 h-1.5 bg-[#BFDBFE] rounded-full transition-all" />
                 </div>
             </div>
 
             {/* Footer Copyright */}
             <div className="text-center w-full">
-                <p className="text-[10px] font-bold text-slate-400 tracking-wide">
+                <p className="text-[11px] font-bold text-slate-400 tracking-wide">
                 Copyright © 2026 LokalLens AI
                 </p>
             </div>
           </div>
-      </div>    </div>
+      </div>
+    </div>
   );
 }
