@@ -15,6 +15,7 @@ import {
   Calendar01Icon
 } from "@hugeicons/core-free-icons";
 import { motion } from "framer-motion";
+import { logoutAction } from "@/app/(auth)/actions";
 
 const menuItems = [
   { name: "Visualizer AI", icon: MagicWandIcon, href: "/dashboard/visualizer" },
@@ -82,7 +83,11 @@ export function Sidebar() {
             <HugeiconsIcon icon={Settings02Icon} size={22} className="group-hover:rotate-45 transition-transform duration-500" />
           </div>
         </Link>
-        <button title="Keluar" className="w-10 h-10 flex items-center justify-center text-[#2354FF]/70 hover:text-red-500 transition-all group">
+        <button 
+          title="Keluar" 
+          onClick={() => logoutAction()}
+          className="w-10 h-10 flex items-center justify-center text-[#2354FF]/70 hover:text-red-500 transition-all group"
+        >
           <HugeiconsIcon icon={Logout01Icon} size={22} className="group-hover:translate-x-1 transition-transform" />
         </button>
       </div>

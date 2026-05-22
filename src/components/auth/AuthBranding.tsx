@@ -1,119 +1,94 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Sparkles, ShoppingBag, BarChart3, PenTool, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import { ReactNode } from "react";
 
-export function AuthBranding() {
+interface AuthBrandingProps {
+  children?: ReactNode;
+  activeTab: 'masuk' | 'daftar';
+}
+
+export function AuthBranding({ children, activeTab }: AuthBrandingProps) {
+  const isDaftar = activeTab === 'daftar';
+
   return (
-    <div className="relative hidden lg:flex flex-col justify-between w-1/2 bg-brand-950 p-12 overflow-hidden text-white">
-      {/* Dynamic Background Gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-            x: [0, 50, 0],
-            y: [0, -50, 0]
+    <div className="flex min-h-screen w-full bg-white font-sans overflow-x-hidden relative">
+
+      {/* ── SISI KIRI: Blue Panel (Tempat Card Login & Daftar) ── */}
+      <div
+        className={`flex items-center justify-center p-4 sm:p-6 relative overflow-hidden min-h-screen z-10 transition-all duration-500 ease-in-out ${
+          isDaftar ? "w-full lg:w-full" : "w-full lg:w-[45%]"
+        }`}
+        style={{
+          background:
+            "radial-gradient(ellipse at 60% 40%, #93C5FD 0%, #3B82F6 40%, #1D4ED8 100%)",
+        }}
+      >
+        {/* Soft glow overlays */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 70%, rgba(255,255,255,0.18) 0%, transparent 60%)",
           }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-600/30 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3"
         />
-        <motion.div
-          animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.4, 0.2],
-            x: [0, -50, 0],
-            y: [0, 50, 0]
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 75% 20%, rgba(255,255,255,0.12) 0%, transparent 55%)",
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-400/20 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3"
         />
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CgkJPHBhdGggZD0iTTAgMGg0MHY0MEgwem0yMCAyMGMtMiAwLTItMi0yLTJzMC0yIDItMiAyIDAgMiAyIDIgMiAyIDJ6IiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDUpIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz4KCTwvc3ZnPg==')] opacity-20" />
-      </div>
-
-      {/* Top Section */}
-      <div className="relative z-10">
-        <Link href="/" className="flex items-center gap-3 w-fit group">
-          <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-600/40 group-hover:scale-110 transition-transform">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-2xl font-black tracking-tight text-white">
-            LokalLens<span className="text-brand-400">AI</span>
-          </span>
-        </Link>
-      </div>
-
-      {/* Middle Section */}
-      <div className="relative z-10 max-w-lg mt-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-md mb-6">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs font-bold text-white tracking-wide uppercase">AI Commerce Assistant</span>
-          </div>
-          
-          <h1 className="text-5xl font-black leading-[1.1] mb-6 tracking-tight">
-            Tingkatkan Omzet <br/>
-            UMKM Anda dengan <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-white">Kecerdasan Buatan.</span>
-          </h1>
-          
-          <p className="text-brand-100/70 text-lg leading-relaxed mb-10 max-w-md font-medium">
-            LokalLens AI membantu bisnis lokal membuat visual produk profesional, copy marketing cerdas, dan analisis tren hanya dalam hitungan detik.
-          </p>
-        </motion.div>
-
-        {/* Feature Highlights */}
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { icon: ShoppingBag, title: "AI Visualizer", desc: "Foto Studio Instan" },
-            { icon: PenTool, title: "Smart Copy", desc: "Caption Bahasa Lokal" },
-            { icon: BarChart3, title: "Trend Analyzer", desc: "Data Pasar Real-time" },
-            { icon: Calendar, title: "Smart Scheduler", desc: "Jadwal Posting Otomatis" },
-          ].map((feature, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 + (i * 0.1) }}
-              className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm"
-            >
-              <div className="w-10 h-10 rounded-xl bg-brand-600/20 flex items-center justify-center border border-brand-600/30">
-                <feature.icon className="w-5 h-5 text-brand-400" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white leading-tight">{feature.title}</p>
-                <p className="text-[10px] font-medium text-brand-100/60 uppercase tracking-wider">{feature.desc}</p>
-              </div>
-            </motion.div>
-          ))}
+        
+        {/* Container Utama */}
+        <div className="relative z-10 w-full flex items-center justify-center">
+          {children}
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="relative z-10 mt-20">
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md w-fit">
-           <div className="flex -space-x-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-10 h-10 rounded-full bg-brand-800 border-2 border-brand-950 flex items-center justify-center font-bold text-xs z-10">
-                   UMKM
+      {/* ── SISI KANAN: Grid-Paper Branding Panel (Slide Out ke Kanan) ── */}
+      <div
+          className={`hidden lg:flex w-[55%] flex-col absolute top-0 bottom-0 right-0 bg-white items-center justify-center p-12 transition-all duration-500 ease-in-out z-0 ${
+          isDaftar ? "translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"
+          }`}
+          style={{
+          backgroundImage: `
+              linear-gradient(to right, #E2E8F0 1px, transparent 1.5px),
+              linear-gradient(to bottom, #E2E8F0 1px, transparent 1.5px)
+          `,
+          backgroundSize: "24px 24px",
+          }}
+      >
+          <div className="w-full max-w-lg flex flex-col">
+            {/* Teks Sambutan Branding */}
+            <div className="mb-10">
+                <p className="text-[#2563EB] text-[14px] md:text-[16px] font-medium mb-1 tracking-wide">
+                Selamat datang di
+                </p>
+                <h1 className="text-4xl md:text-[56px] font-bold text-[#1D4ED8] tracking-tight leading-tight mb-4">
+                LokalLens AI<span className="text-[#2563EB]">.</span>
+                </h1>
+                <p className="text-[#2563EB] font-medium text-xs md:text-[15px] max-w-sm leading-relaxed opacity-80">
+                Satu tempat untuk segala kebutuhan visual dan promosi usahamu.
+                </p>
+            </div>
+
+            {/* Block Placeholder Gambar Utama */}
+            <div className="w-full mb-10 flex flex-col items-center">
+                <div className="w-full aspect-[16/9] bg-[#94A3B8] rounded-[20px] shadow-inner" />
+                <div className="flex justify-center gap-1.5 mt-6">
+                  <span className="w-10 h-1.5 bg-[#2563EB] rounded-full transition-all" />
+                  <span className="w-10 h-1.5 bg-[#BFDBFE] rounded-full transition-all" />
+                  <span className="w-10 h-1.5 bg-[#BFDBFE] rounded-full transition-all" />
                 </div>
-              ))}
-           </div>
-           <div>
-              <div className="flex items-center gap-1 mb-1">
-                 <CheckCircle2 className="w-4 h-4 text-green-400" />
-                 <span className="text-sm font-bold text-white">Dipercaya 500+ Bisnis Lokal</span>
-              </div>
-              <p className="text-xs text-brand-100/60 font-medium">Bergabunglah dengan pengusaha cerdas lainnya.</p>
-           </div>
-        </div>
-      </div>
-    </div>
+            </div>
+
+            {/* Footer Copyright */}
+            <div className="text-center w-full">
+                <p className="text-[10px] font-bold text-slate-400 tracking-wide">
+                Copyright © 2026 LokalLens AI
+                </p>
+            </div>
+          </div>
+      </div>    </div>
   );
 }

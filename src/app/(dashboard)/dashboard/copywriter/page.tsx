@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, 
@@ -32,6 +32,7 @@ export default function CopywriterPage() {
   const [category, setCategory] = useState("");
   const [tone, setTone] = useState("Professional");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<{
     caption: string;
     hashtags: string[];
@@ -50,6 +51,11 @@ export default function CopywriterPage() {
   } | null>(null);
   const [isCalculatingPricing, setIsCalculatingPricing] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
+
+  // Fix hydration mismatch
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
   
   const generateFullMarketing = async () => {
     if (!productName || !category) {
@@ -250,17 +256,23 @@ export default function CopywriterPage() {
                  )}
                  <div>
                     <p className="text-xs font-bold text-brand-900/40 uppercase tracking-widest mb-1">Rekomendasi Harga Psikologis</p>
-                    <div className="flex items-baseline gap-2">
-                       <h3 className="text-3xl font-black text-brand-600">Rp {currentRecommendedPrice.toLocaleString()}</h3>
-                       {pricingStrategy?.strikeThroughPrice && (
-                         <span className="text-sm text-brand-900/20 line-through">Rp {pricingStrategy.strikeThroughPrice.toLocaleString()}</span>
-                       )}
-                    </div>
+                    {hasMounted ? (
+                      <div className="flex items-baseline gap-2">
+                         <h3 className="text-3xl font-black text-brand-600">Rp {currentRecommendedPrice.toLocaleString()}</h3>
+                         {pricingStrategy?.strikeThroughPrice && (
+                           <span className="text-sm text-brand-900/20 line-through">Rp {pricingStrategy.strikeThroughPrice.toLocaleString()}</span>
+                         )}
+                      </div>
+                    ) : (
+                      <div className="h-9 w-32 bg-brand-200/20 animate-pulse rounded-lg" />
+                    )}
                  </div>
                  <div className="text-right">
-                    <Badge className="bg-green-100 text-green-600 border-green-200 mb-1">
-                      Profit: Rp {(currentRecommendedPrice - basePrice).toLocaleString()}
-                    </Badge>
+                    {hasMounted && (
+                      <Badge className="bg-green-100 text-green-600 border-green-200 mb-1">
+                        Profit: Rp {(currentRecommendedPrice - basePrice).toLocaleString()}
+                      </Badge>
+                    )}
                     <p className="text-[10px] text-brand-900/40 italic">
                       {pricingStrategy ? "Strategi AI Aktif" : "*Estimasi 99-ending"}
                     </p>
