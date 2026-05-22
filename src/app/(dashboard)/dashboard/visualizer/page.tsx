@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Upload, 
@@ -12,14 +12,14 @@ import {
   RefreshCw,
   Layers,
   Check,
-  ChevronRight,
-  Info
+  Info,
+  Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Mock Themes
 const themes = [
@@ -34,6 +34,7 @@ const themes = [
 export default function VisualizerPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [resultImage, setResultImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(themes[0].id);
@@ -46,6 +47,7 @@ export default function VisualizerPage() {
     if (selectedFile) {
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
+      setResultImage(null);
       setIsDone(false);
     }
   };
@@ -56,24 +58,65 @@ export default function VisualizerPage() {
     if (selectedFile) {
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
+      setResultImage(null);
       setIsDone(false);
     }
   };
 
-  const processImage = () => {
+  const processImage = async () => {
+    if (!file) {
+      toast.error("Silakan unggah foto produk terlebih dahulu");
+      return;
+    }
+
     setIsProcessing(true);
-    // Simulate AI processing
-    setTimeout(() => {
+    
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("theme", selectedTheme);
+
+      const response = await fetch("/api/ai/enhance-product-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal memproses gambar");
+      }
+
+      const data = await response.json();
+      
+      if (data.base64) {
+        setResultImage(`data:${data.mimeType || 'image/png'};base64,${data.base64}`);
+        setIsDone(true);
+        toast.success("Gambar berhasil ditingkatkan!");
+      } else {
+        throw new Error("Tidak ada gambar yang dihasilkan");
+      }
+    } catch (error: any) {
+      console.error("Error processing image:", error);
+      toast.error(error.message || "Terjadi kesalahan saat memproses gambar");
+    } finally {
       setIsProcessing(false);
-      setIsDone(true);
-    }, 3500);
+    }
   };
 
   const reset = () => {
     setFile(null);
     setPreview(null);
+    setResultImage(null);
     setIsDone(false);
     setIsProcessing(false);
+  };
+
+  const downloadResult = () => {
+    if (!resultImage) return;
+    const link = document.createElement("a");
+    link.href = resultImage;
+    link.download = `lokallens-enhanced-${Date.now()}.png`;
+    link.click();
   };
 
   return (
@@ -149,7 +192,11 @@ export default function VisualizerPage() {
                     <div className="flex gap-2">
                        {isDone && (
                          <>
-                           <Button size="sm" className="rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/20">
+                           <Button 
+                             size="sm" 
+                             className="rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/20"
+                             onClick={downloadResult}
+                           >
                              <Download className="w-4 h-4 mr-2" />
                              Simpan HD
                            </Button>
@@ -188,7 +235,7 @@ export default function VisualizerPage() {
                             </div>
                           </div>
                         </motion.div>
-                      ) : isDone ? (
+                      ) : isDone && resultImage ? (
                         /* Before/After Comparison */
                         <motion.div 
                           key="done"
@@ -198,11 +245,7 @@ export default function VisualizerPage() {
                         >
                           {/* After (With AI Background) */}
                           <div className="absolute inset-0 bg-brand-50 flex items-center justify-center overflow-hidden">
-                             {/* Mock AI Background */}
-                             <div className="absolute inset-0 opacity-40 mix-blend-overlay bg-gradient-to-br from-brand-200 to-brand-500" />
-                             <div className="absolute inset-0 flex items-center justify-center">
-                                <img src={preview} alt="Result" className="w-[80%] h-[80%] object-contain drop-shadow-2xl" />
-                             </div>
+                             <img src={resultImage} alt="Result" className="w-full h-full object-cover" />
                              {/* Theme indicators */}
                              <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center pointer-events-none">
                                 <Badge className="bg-white/80 backdrop-blur-md text-brand-600 border-white">Tema: {themes.find(t => t.id === selectedTheme)?.name}</Badge>
@@ -214,7 +257,7 @@ export default function VisualizerPage() {
                             className="absolute inset-0 pointer-events-none border-r-2 border-white shadow-xl"
                             style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
                           >
-                             <img src={preview} alt="Original" className="w-full h-full object-cover grayscale-[0.5] opacity-80" />
+                             <img src={preview} alt="Original" className="w-full h-full object-cover grayscale-[0.2] opacity-90" />
                              <div className="absolute top-6 left-6">
                                 <Badge variant="outline" className="bg-black/20 backdrop-blur-sm text-white border-white/20">ORIGINAL</Badge>
                              </div>
@@ -371,4 +414,3 @@ export default function VisualizerPage() {
   );
 }
 
-import { Camera } from "lucide-react";
