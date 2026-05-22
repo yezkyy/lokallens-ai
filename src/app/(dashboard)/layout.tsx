@@ -3,7 +3,7 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import { useState } from "react";
-import { X, Sparkles } from "lucide-react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -147,20 +147,6 @@ export default function DashboardLayout({
             {children}
           </div>
         </main>
-
-        {/* Floating AI Assistant Button */}
-        <div className="fixed bottom-8 right-8 z-50">
-           <motion.button
-             whileHover={{ scale: 1.1 }}
-             whileTap={{ scale: 0.9 }}
-             className="w-14 h-14 bg-brand-600 rounded-2xl shadow-2xl shadow-brand-600/40 flex items-center justify-center text-white relative group"
-           >
-              <Sparkles className="w-6 h-6" />
-              <div className="absolute right-full mr-4 px-3 py-1.5 bg-brand-950 text-white text-xs rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold">
-                 Tanya AI LokalLens
-              </div>
-           </motion.button>
-        </div>
       </div>
     </div>
   );
