@@ -77,11 +77,12 @@ CREATE TABLE IF NOT EXISTS trend_analytics (
 );
 
 -- 7. ai_voice_logs
-CREATE TABLE IF NOT EXISTS ai_voice_logs (
+CREATE TABLE IF NOT EXISTS generated_images (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  voice_command TEXT NOT NULL,
-  detected_intent TEXT,
-  action_result TEXT,
+  image_url TEXT NOT NULL,
+  prompt_used TEXT,
+  settings JSONB,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+

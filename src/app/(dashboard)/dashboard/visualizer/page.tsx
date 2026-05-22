@@ -7,43 +7,47 @@ import {
   Sparkles, 
   Download, 
   RefreshCw,
-  Palette,
-  Home,
-  Sun,
-  Type,
-  ImageIcon,
-  CheckCircle2,
-  AlertCircle,
-  Code
+  Settings2,
+  Image as ImageIcon,
+  ChevronDown,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import ReactCompareImage from "react-compare-image";
 
+// Options based on design requirements
 const visualStyles = [
-  { id: "Cinematic", name: "Cinematic", icon: "🎬" },
-  { id: "Minimalist", name: "Minimalist", icon: "⚪" },
-  { id: "Vibrant", name: "Vibrant", icon: "🌈" },
-  { id: "Vintage", name: "Vintage", icon: "🎞️" },
+  "Cinematic (Film)",
+  "Commercial Photo",
+  "Product Catalog",
+  "Artistic/Creative",
+  "Minimalist White"
 ];
 
 const studioStyles = [
-  { id: "Luxury Marble", name: "Marble", icon: "🏛️" },
-  { id: "Modern Cafe", name: "Cafe", icon: "☕" },
-  { id: "Rustic Wood", name: "Wood", icon: "🪵" },
-  { id: "Nature Garden", name: "Garden", icon: "🌿" },
-  { id: "Professional Studio", name: "Studio", icon: "📸" },
+  "Cinematic (Film)",
+  "Modern Cafe",
+  "Luxury Marble",
+  "Rustic Wood",
+  "Nature Garden",
+  "Professional Studio"
 ];
 
 const lightingStyles = [
-  { id: "Soft Studio", name: "Soft", icon: "💡" },
-  { id: "Warm Sunlight", name: "Warm", icon: "☀️" },
-  { id: "Neon Purple", name: "Neon", icon: "🔮" },
-  { id: "Natural Window", name: "Natural", icon: "🪟" },
+  "Cinematic Lighting (High Contrast)",
+  "Soft Studio Light",
+  "Warm Sunlight",
+  "Neon Purple",
+  "Natural Window Light"
+];
+
+const sizes = [
+  "16:9 Cinema",
+  "1:1 Square",
+  "9:16 Mobile/Story",
+  "4:3 Presentation"
 ];
 
 export default function VisualizerPage() {
@@ -51,22 +55,15 @@ export default function VisualizerPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [visualStyle, setVisualStyle] = useState(visualStyles[0].id);
-  const [studioStyle, setStudioStyle] = useState(studioStyles[0].id);
-  const [lighting, setLighting] = useState(lightingStyles[0].id);
+  
+  // Form States
+  const [visualStyle, setVisualStyle] = useState(visualStyles[0]);
+  const [studioStyle, setStudioStyle] = useState(studioStyles[0]);
+  const [lighting, setLighting] = useState(lightingStyles[0]);
+  const [size, setSize] = useState(sizes[0]);
   const [customInstruction, setCustomInstruction] = useState("");
-  const [cooldown, setCooldown] = useState(0);
-  const [rawError, setRawError] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (cooldown > 0) {
-      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [cooldown]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -74,7 +71,6 @@ export default function VisualizerPage() {
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
       setResultImage(null);
-      setRawError(null);
     }
   };
 
@@ -85,11 +81,10 @@ export default function VisualizerPage() {
     }
     
     setIsProcessing(true);
-    setRawError(null);
     const formData = new FormData();
     formData.append("image", file);
-    formData.append("quality", "standard");
-    formData.append("aspectRatio", "1:1");
+    formData.append("quality", "high");
+    formData.append("aspectRatio", size.split(" ")[0]);
     formData.append("visualStyle", visualStyle);
     formData.append("studioStyle", studioStyle);
     formData.append("lighting", lighting);
@@ -103,21 +98,28 @@ export default function VisualizerPage() {
 
       const data = await response.json();
       
-      if (!response.ok) {
-        setRawError(JSON.stringify(data, null, 2));
-        throw new Error(data.error || "Gagal memproses gambar. Cek detail error di bawah.");
-      }
+      if (!response.ok) throw new Error(data.error || "Gagal memproses gambar.");
 
       const finalUrl = data.base64 ? `data:image/png;base64,${data.base64}` : data.url;
       
       if (finalUrl) {
         setResultImage(finalUrl);
-        setCooldown(15);
-        toast.success("Magic Gemini Berhasil!");
-        setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 500);
-      } else {
-        setRawError(JSON.stringify(data, null, 2));
-        throw new Error("AI Berhasil tapi tidak ada gambar. Klik 'Debug JSON' untuk melihat isi respon.");
+        toast.success("Visualisasi Berhasil!");
+
+        // Save to Gallery
+        try {
+          await fetch("/api/gallery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image_url: finalUrl,
+              prompt_used: customInstruction || `Visualisasi ${visualStyle} di ${studioStyle}`,
+              settings: { visualStyle, studioStyle, lighting, size }
+            })
+          });
+        } catch (saveError) {
+          console.error("Gagal menyimpan ke galeri:", saveError);
+        }
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -126,130 +128,250 @@ export default function VisualizerPage() {
     }
   };
 
-  return (
-    <div className="space-y-12 pb-24">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black text-brand-950 flex items-center gap-3">
-            <Sparkles className="w-10 h-10 text-brand-600" />
-            Gemini Visualizer <span className="text-brand-600">2.5</span>
-          </h1>
-          <p className="text-brand-900/40 font-medium text-lg">Menggunakan Gemini 2.5 Flash Image untuk hasil super realistis.</p>
-        </div>
-      </div>
+  const downloadResult = async () => {
+    if (!resultImage) return;
+    
+    try {
+      // If it's a data URI (base64)
+      if (resultImage.startsWith('data:')) {
+        const link = document.createElement("a");
+        link.href = resultImage;
+        link.download = `LokalLens-Visualizer-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // If it's a URL, fetch it first to avoid navigation issues
+        const response = await fetch(resultImage);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = `LokalLens-Visualizer-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }
+      toast.success("Gambar berhasil diunduh!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Gagal mengunduh gambar.");
+    }
+  };
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden sticky top-24">
-            <CardContent className="p-8 space-y-8">
+  return (
+    <div className="min-h-full w-full relative">
+      {/* Dynamic Background Gradient - Consistent with Dashboard */}
+      <div className="fixed inset-0 z-0 pointer-events-none" 
+           style={{ 
+             background: `linear-gradient(to bottom, #B8D3FF 50%, #F1F6FF 80%, #FFFFFF 100%)`
+           }} 
+      />
+      
+      {/* Blueprint Grid Background - More subtle integration */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-20" 
+           style={{ 
+             backgroundImage: `linear-gradient(#2354FF 1px, transparent 1px), linear-gradient(90deg, #2354FF 1px, transparent 1px)`,
+             backgroundSize: '40px 40px' 
+           }} 
+      />
+      
+      <div className="relative z-10 flex flex-col lg:flex-row w-full min-h-full">
+        {/* Sidebar Settings - Responsive: Stacked on mobile, Sidebar on desktop */}
+        <aside className="w-full lg:w-[380px] bg-white/80 backdrop-blur-md border-b lg:border-b-0 lg:border-r border-brand-100 flex flex-col z-10 shadow-xl lg:m-4 lg:rounded-[2rem] overflow-hidden shrink-0">
+          <div className="p-4 lg:p-6 flex-grow overflow-y-auto space-y-6 custom-scrollbar max-h-[50vh] lg:max-h-none">
+            
+            {/* Upload Section */}
+            <div 
+              className={cn(
+                "relative aspect-[16/10] rounded-2xl border-2 border-dashed border-brand-200 bg-white flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-brand-50 transition-all overflow-hidden",
+                preview && "border-none p-0"
+              )}
+              onClick={() => !preview && fileInputRef.current?.click()}
+            >
+              {preview ? (
+                <>
+                  <img src={preview} className="w-full h-full object-cover" alt="Preview" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setFile(null); setPreview(null); }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center text-red-500 shadow-md hover:bg-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center mb-4">
+                    <Upload className="w-6 h-6 text-brand-600" />
+                  </div>
+                  <h4 className="font-bold text-brand-950 text-sm lg:text-base">Taruh Foto Produk Kamu Disini!</h4>
+                  <p className="text-[10px] text-brand-900/40 mt-1">Silahkan masukkan file PNG, JPG, atau JPEG</p>
+                </>
+              )}
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} hidden accept="image/*" />
+            </div>
+
+            {/* Pengaturan Header */}
+            <div className="bg-brand-600 rounded-xl py-3 px-4 flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
+              <span className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Pengaturan Visual</span>
+              <Settings2 className="w-4 h-4 text-white" />
+            </div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
               {/* Gaya Visual */}
-              <section className="space-y-4">
-                 <div className="flex items-center gap-2 text-brand-950 font-bold">
-                    <Palette className="w-5 h-5 text-brand-600" />
-                    <h3>Gaya Visual</h3>
-                 </div>
-                 <div className="grid grid-cols-2 gap-2">
-                    {visualStyles.map(s => (
-                      <button key={s.id} onClick={() => setVisualStyle(s.id)} className={cn("flex items-center gap-2 p-3 rounded-xl border-2 transition-all", visualStyle === s.id ? "border-brand-600 bg-brand-50" : "border-slate-50 hover:border-brand-100")}>
-                        <span>{s.icon}</span>
-                        <span className="text-xs font-bold">{s.name}</span>
-                      </button>
-                    ))}
-                 </div>
-              </section>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-brand-950 uppercase tracking-widest pl-1">Gaya Visual</label>
+                <div className="relative group">
+                  <select 
+                    value={visualStyle}
+                    onChange={(e) => setVisualStyle(e.target.value)}
+                    className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-brand-100 rounded-xl text-xs font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+                  >
+                    {visualStyles.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-400 pointer-events-none group-hover:text-brand-600 transition-colors" />
+                </div>
+              </div>
 
               {/* Gaya Studio */}
-              <section className="space-y-4">
-                 <div className="flex items-center gap-2 text-brand-950 font-bold">
-                    <Home className="w-5 h-5 text-brand-600" />
-                    <h3>Studio</h3>
-                 </div>
-                 <div className="grid grid-cols-2 gap-2">
-                    {studioStyles.map(s => (
-                      <button key={s.id} onClick={() => setStudioStyle(s.id)} className={cn("flex items-center gap-2 p-3 rounded-xl border-2 transition-all", studioStyle === s.id ? "border-brand-600 bg-brand-50" : "border-slate-50")}>
-                        <span>{s.icon}</span>
-                        <span className="text-xs font-bold">{s.name}</span>
-                      </button>
-                    ))}
-                 </div>
-              </section>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-brand-950 uppercase tracking-widest pl-1">Gaya Studio</label>
+                <div className="relative group">
+                  <select 
+                    value={studioStyle}
+                    onChange={(e) => setStudioStyle(e.target.value)}
+                    className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-brand-100 rounded-xl text-xs font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+                  >
+                    {studioStyles.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-400 pointer-events-none group-hover:text-brand-600 transition-colors" />
+                </div>
+              </div>
 
-              <Button size="lg" disabled={isProcessing || !file || cooldown > 0} className="w-full h-16 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-brand-600/30" onClick={processImage}>
-                {isProcessing ? <RefreshCw className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                {cooldown > 0 ? `Tunggu ${cooldown}s` : "Transformasikan"}
-              </Button>
+              {/* Cahaya */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-brand-950 uppercase tracking-widest pl-1">Cahaya</label>
+                <div className="relative group">
+                  <select 
+                    value={lighting}
+                    onChange={(e) => setLighting(e.target.value)}
+                    className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-brand-100 rounded-xl text-xs font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+                  >
+                    {lightingStyles.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-400 pointer-events-none group-hover:text-brand-600 transition-colors" />
+                </div>
+              </div>
 
-              {rawError && (
-                <Button variant="ghost" size="sm" className="w-full text-red-500 hover:bg-red-50 font-mono text-[10px]" onClick={() => console.log(rawError)}>
-                  <Code className="w-3 h-3 mr-2" /> DEBUG JSON ERROR (Check Console)
-                </Button>
+              {/* Ukuran */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-brand-950 uppercase tracking-widest pl-1">Ukuran</label>
+                <div className="relative group">
+                  <select 
+                    value={size}
+                    onChange={(e) => setSize(e.target.value)}
+                    className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-brand-100 rounded-xl text-xs font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+                  >
+                    {sizes.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-400 pointer-events-none group-hover:text-brand-600 transition-colors" />
+                </div>
+              </div>
+            </div>
+
+            {/* Instruksi */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-brand-950 uppercase tracking-widest pl-1">Instruksi (Opsional)</label>
+              <Textarea 
+                placeholder="Misal: Tambahkan bunga di samping produk"
+                value={customInstruction}
+                onChange={(e) => setCustomInstruction(e.target.value)}
+                className="min-h-[80px] lg:min-h-[100px] bg-slate-50 border-brand-100 rounded-xl text-xs font-medium placeholder:text-slate-300"
+              />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="p-4 lg:p-6 bg-slate-50/50 border-t border-brand-50">
+            <Button 
+              onClick={processImage} 
+              disabled={isProcessing || !file}
+              className="w-full h-12 lg:h-14 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-brand-600/30 group"
+            >
+              {isProcessing ? (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              ) : (
+                <>Mulai <Sparkles className="w-4 h-4 ml-2" /></>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </Button>
+          </div>
+        </aside>
 
-        <div className="lg:col-span-8 space-y-10">
-          <Card className="border-none shadow-sm rounded-[3rem] bg-white overflow-hidden min-h-[400px] flex items-center justify-center">
-             {!preview ? (
-               <div className="flex flex-col items-center justify-center p-20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-24 h-24 bg-brand-50 rounded-[2.5rem] flex items-center justify-center mb-6">
-                    <Upload className="w-10 h-10 text-brand-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-brand-950">Unggah Foto Produk</h3>
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} hidden accept="image/*" />
-               </div>
-             ) : (
-                <div className="relative p-10">
-                   <div className="w-full max-w-md aspect-square rounded-[2.5rem] overflow-hidden border-[12px] border-slate-50 shadow-2xl">
-                      <img src={preview} className="w-full h-full object-cover" alt="Original" />
-                   </div>
-                   <Badge className="absolute top-14 left-14 bg-white/90 text-brand-600 font-bold">ASLI</Badge>
-                </div>
-             )}
-          </Card>
+        {/* Main Content Area */}
+        <main className="flex-grow p-4 lg:p-8 flex flex-col relative min-h-[500px]">
+          {/* Header Tools */}
+          <div className="flex justify-end mb-4 lg:mb-8 relative z-10">
+            <Button 
+              onClick={downloadResult}
+              disabled={!resultImage}
+              className="h-10 lg:h-12 px-6 lg:px-8 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-brand-600/20 transition-all flex items-center gap-3"
+            >
+              Unduh Gambar <Download className="w-4 h-4" />
+            </Button>
+          </div>
 
-          <AnimatePresence>
-            {(isProcessing || resultImage) && (
-              <motion.div ref={resultRef} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <Card className="border-none shadow-2xl rounded-[3.5rem] bg-slate-950 overflow-hidden relative">
-                   <CardContent className="p-0 min-h-[600px] flex items-center justify-center">
-                      {isProcessing ? (
-                        <div className="flex flex-col items-center text-white space-y-6">
-                           <div className="relative w-24 h-24">
-                              <div className="absolute inset-0 border-4 border-brand-600 rounded-full border-t-transparent animate-spin" />
-                           </div>
-                           <p className="text-xl font-bold">Gemini 2.5 sedang merancang visual...</p>
-                        </div>
-                      ) : resultImage && (
-                        <div className="w-full h-full p-8 md:p-12">
-                           <div className="rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white/10">
-                              <ReactCompareImage leftImage={preview!} rightImage={resultImage} leftImageLabel="ASLI" rightImageLabel="GEMINI AI" sliderLineWidth={4} handleSize={50} />
-                           </div>
-                           <Button size="lg" className="mt-8 bg-white text-slate-950 rounded-2xl w-full h-16 font-bold" onClick={() => { const link = document.createElement("a"); link.href = resultImage; link.download = "LokalLens-Gemini.png"; link.click(); }}>
-                             <Download className="mr-2" /> Simpan Hasil PRO
-                           </Button>
-                        </div>
-                      )}
-                   </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {rawError && (
-             <div className="p-6 bg-red-50 border border-red-100 rounded-3xl space-y-3">
-                <div className="flex items-center gap-2 text-red-600 font-bold">
-                   <AlertCircle className="w-5 h-5" />
-                   <h4>Detail Kegagalan Teknis</h4>
-                </div>
-                <pre className="p-4 bg-white rounded-xl text-[10px] text-red-400 overflow-x-auto border border-red-50">
-                   {rawError}
-                </pre>
-                <p className="text-xs text-red-900/40 italic">Silakan salin teks merah di atas dan kirimkan ke saya untuk diperbaiki.</p>
-             </div>
-          )}
-        </div>
+          {/* Canvas / Result Area */}
+          <div className="flex-grow flex items-center justify-center relative">
+            <div className="w-full max-w-4xl aspect-square bg-[#FFF0F0] rounded-[2rem] lg:rounded-[3rem] shadow-2xl border-4 border-white/50 overflow-hidden flex items-center justify-center relative group">
+              <AnimatePresence mode="wait">
+                {isProcessing ? (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-4"
+                  >
+                    <div className="w-12 h-12 lg:w-16 lg:h-16 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-brand-900/40 font-black uppercase tracking-widest text-[10px] lg:text-xs">Menganalisis...</p>
+                  </motion.div>
+                ) : resultImage ? (
+                  <motion.img 
+                    key="result"
+                    src={resultImage} 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full h-full object-contain" 
+                    alt="Hasil Visualisasi" 
+                  />
+                ) : (
+                  <motion.div 
+                    key="placeholder"
+                    className="text-center"
+                  >
+                    <h3 className="text-lg lg:text-xl font-black text-brand-950/40 uppercase tracking-[0.3em]">Hasil Gambar</h3>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Blueprint Crosshairs/Markers */}
+              <div className="absolute top-6 lg:top-8 left-6 lg:left-8 w-6 h-6 border-t-2 border-l-2 border-brand-200/50" />
+              <div className="absolute top-6 lg:top-8 right-6 lg:right-8 w-6 h-6 border-t-2 border-r-2 border-brand-200/50" />
+              <div className="absolute bottom-6 lg:bottom-8 left-6 lg:left-8 w-6 h-6 border-b-2 border-l-2 border-brand-200/50" />
+              <div className="absolute bottom-6 lg:bottom-8 right-6 lg:right-8 w-6 h-6 border-b-2 border-r-2 border-brand-200/50" />
+            </div>
+          </div>
+        </main>
       </div>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+      `}</style>
     </div>
   );
 }

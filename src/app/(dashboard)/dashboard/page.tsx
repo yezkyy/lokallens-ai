@@ -3,22 +3,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, 
-  Users, 
-  ShoppingBag, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Sparkles,
-  Zap,
-  Clock,
-  ChevronRight,
-  Plus,
-  Search,
-  BarChart3,
-  Target,
-  RefreshCw,
-  AlertCircle,
-  Tag,
-  DollarSign
+  Sparkles, 
+  Search, 
+  RefreshCw, 
+  DollarSign, 
+  Tag, 
+  Layout,
+  Calendar
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -27,15 +18,13 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell
+  ResponsiveContainer 
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getUMKMProfile } from "./actions";
 import { toast } from "sonner";
@@ -68,8 +57,6 @@ export default function DashboardPage() {
       const data = await getUMKMProfile();
       setProfile(data);
       setIsLoadingProfile(false);
-      
-      // Ensure trendData is null on mount
       setTrendData(null);
     }
     loadProfile();
@@ -82,7 +69,7 @@ export default function DashboardPage() {
     }
     
     setIsAnalyzing(true);
-    setTrendData(null); // Clear previous data
+    setTrendData(null);
     
     try {
       const response = await fetch("/api/ai/analyze-market-trends", {
@@ -101,21 +88,14 @@ export default function DashboardPage() {
       }
       
       if (!response.ok) {
-        console.error("AI Analysis API Error Response:", result);
-        const errorMsg = result.error || "Gagal memuat tren pasar dari server";
-        const errorDetail = result.details ? `\nDetail: ${result.details}` : "";
-        throw new Error(`${errorMsg}${errorDetail}`);
+        throw new Error(result.error || "Gagal memuat tren pasar");
       }
       
       setTrendData(result);
       toast.success(`Analisis untuk "${query}" berhasil dimuat`);
     } catch (error: any) {
       console.error("Error in handleAnalyze:", error);
-      toast.error(error.message, {
-        duration: 10000,
-      });
-      
-      // Keep trendData null so we don't show broken/dummy analysis if it failed
+      toast.error(error.message, { duration: 10000 });
       setTrendData(null);
     } finally {
       setIsAnalyzing(false);
@@ -131,269 +111,198 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-12 pb-12">
-      {/* Search Header - Centered & Prominent */}
-      <div className="max-w-3xl mx-auto text-center space-y-8 pt-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-2"
-        >
-          <h1 className="text-4xl md:text-5xl font-black text-brand-950 tracking-tight">
-            Intelijen Pasar <span className="text-brand-600">Samarinda</span>
-          </h1>
-          <p className="text-brand-900/40 font-medium text-lg">
-            Ketik nama produk untuk memata-matai tren dan harga kompetitor.
-          </p>
-        </motion.div>
+    <div className="min-h-full w-full relative">
+      {/* Dynamic Background Gradient - Exact spec from user */}
+      <div className="fixed inset-0 z-0 pointer-events-none" 
+           style={{ 
+             background: `linear-gradient(to bottom, #B8D3FF 50%, #F1F6FF 80%, #FFFFFF 100%)`
+           }} 
+      />
 
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-brand-600 to-brand-400 rounded-[2rem] blur opacity-25 group-focus-within:opacity-50 transition duration-1000"></div>
-          <div className="relative">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-brand-400 group-focus-within:text-brand-600 transition-colors" />
-            <Input 
-              placeholder="Masukkan produk (contoh: Nasi Kuning, Amplas, Batik...)" 
-              className="pl-16 h-20 bg-white border-brand-100 shadow-2xl rounded-[1.8rem] focus:ring-brand-600 font-bold text-xl placeholder:text-brand-900/20"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAnalyze(searchQuery)}
-            />
-            <Button 
-              onClick={() => handleAnalyze(searchQuery)}
-              disabled={isAnalyzing || !searchQuery}
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-14 px-8 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-brand-600/20 transition-all"
-            >
-              {isAnalyzing ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Analisis AI"}
-            </Button>
-          </div>
-        </div>
+      <div className="relative z-10 space-y-8 md:space-y-10 pb-20 pt-4 md:pt-6 px-2 md:px-0 max-w-[1600px] mx-auto min-h-[calc(100vh-80px)] flex flex-col">
         
-        {!trendData && !isAnalyzing && (
-          <div className="flex flex-wrap justify-center gap-3 pt-4">
-             {["Nasi Kuning", "Sarung Samarinda", "Kopi Etam", "Ikan Pepes"].map(tag => (
-               <Badge 
-                 key={tag} 
-                 onClick={() => {
-                   setSearchQuery(tag);
-                   handleAnalyze(tag);
-                 }}
-                 className="bg-white hover:bg-brand-50 text-brand-900/40 border-brand-100 px-4 py-2 rounded-xl cursor-pointer transition-all hover:scale-105"
-               >
-                 + {tag}
-               </Badge>
-             ))}
+        {/* Search Section */}
+        <div className={cn(
+          "w-full transition-all duration-700 ease-in-out flex flex-col items-center justify-center px-1",
+          trendData ? "mt-2 md:mt-4" : "flex-grow"
+        )}>
+          {!trendData && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="space-y-6 md:space-y-8 mb-8 md:mb-12 text-center w-full"
+            >
+              <div className="flex flex-col items-center justify-center gap-4 md:gap-6 px-2">
+                <h1 className="text-xl sm:text-4xl md:text-5xl lg:text-[64px] font-black tracking-tight text-[#2354FF] leading-tight">
+                  Intelijen Pasar Samarinda
+                </h1>
+              </div>
+              <p className="text-[#2354FF]/60 font-bold text-[10px] sm:text-sm md:text-lg lg:text-xl max-w-2xl mx-auto px-6">
+                Cari nama produk untuk melihat tren dan harga yang ada di pasaran
+              </p>
+            </motion.div>
+          )}
+
+          <div className="relative group w-full max-w-3xl mx-auto">
+            <div className="absolute -inset-2 bg-[#2354FF]/5 rounded-full blur-2xl opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+            <div className="relative flex items-center">
+              <div className="absolute left-4 md:left-8 text-[#2354FF]/40">
+                <Calendar className="w-4 h-4 md:w-6 md:h-6" />
+              </div>
+              <Input 
+                placeholder="Cari Nama Produk" 
+                className="pl-10 md:pl-16 pr-14 md:pr-16 h-14 md:h-20 bg-white shadow-[0_20px_50px_rgba(35,84,255,0.1)] border-none rounded-full text-xs sm:text-base md:text-xl font-bold placeholder:text-[#2354FF]/20 focus-visible:ring-2 focus-visible:ring-[#2354FF]/30 transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAnalyze(searchQuery)}
+              />
+              <Button 
+                onClick={() => handleAnalyze(searchQuery)}
+                disabled={isAnalyzing}
+                className="absolute right-1.5 md:right-3 w-11 h-11 md:w-14 md:h-14 bg-[#2354FF] hover:bg-[#1a44cc] text-white rounded-full shadow-lg p-0 flex items-center justify-center transition-transform active:scale-95 shrink-0"
+              >
+                {isAnalyzing ? <RefreshCw className="w-4 h-4 md:w-6 md:h-6 animate-spin" /> : <Search className="w-4 h-4 md:w-6 md:h-6" />}
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
 
-      <AnimatePresence mode="wait">
-        {trendData ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-8"
-          >
-            {/* Left Side: Trends & Competitor Analysis */}
-            <div className="lg:col-span-8 space-y-8">
-              {/* Trend Section */}
-              <Card className="border-none shadow-sm rounded-[2.5rem] bg-white overflow-hidden p-8 relative">
-                <div className="flex items-center justify-between mb-8">
-                   <div>
-                      <h3 className="text-2xl font-black text-brand-950 flex items-center gap-3">
-                         <TrendingUp className="w-7 h-7 text-brand-600" />
-                         Analisis Tren Pasar
-                      </h3>
-                      <p className="text-brand-900/40 text-sm font-medium mt-1">Volume pencarian & minat konsumen untuk <span className="text-brand-600 font-bold">"{searchQuery}"</span></p>
-                   </div>
-                   <Badge className="bg-brand-600/10 text-brand-600 border-none px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest">
-                      Skor: {trendData.trendScore}/100
-                   </Badge>
-                </div>
+          {!trendData && (
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-8 md:mt-10">
+               {["Nasi Kuning", "Sarung Samarinda", "Kopi Etam", "Ikan Pepes"].map(tag => (
+                 <Badge 
+                   key={tag} 
+                   onClick={() => {
+                     setSearchQuery(tag);
+                     handleAnalyze(tag);
+                   }}
+                   className="bg-white/40 backdrop-blur-md hover:bg-[#2354FF] hover:text-white text-[#2354FF] border border-white/50 px-3 md:px-5 py-1.5 md:py-2.5 rounded-full cursor-pointer transition-all hover:scale-105 shadow-lg font-black text-[9px] md:text-xs"
+                 >
+                   + {tag}
+                 </Badge>
+               ))}
+            </div>
+          )}
+        </div>
 
-                <div className="w-full h-[350px] relative">
-                  {trendData && (
+        <AnimatePresence mode="wait">
+          {trendData && (
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 w-full px-2 md:px-6"
+            >
+              {/* TOP ROW: Trend Analysis & AI strategy */}
+              <div className="lg:col-span-8">
+                <Card className="border-none shadow-xl rounded-[1.5rem] md:rounded-[2rem] bg-[#2354FF] text-white overflow-hidden p-5 md:p-8 h-full relative">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-white/10" />
+                  <div className="flex items-center justify-between mb-4 md:mb-6">
+                    <h3 className="text-sm sm:text-base md:text-xl font-black uppercase tracking-[0.2em] opacity-90">Analisis Tren Pasar</h3>
+                  </div>
+
+                  <div className="w-full h-[200px] sm:h-[240px] md:h-[280px] bg-white rounded-[1.2rem] md:rounded-[1.5rem] p-4 md:p-6 shadow-inner relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={trendData.trendChartData}>
-                        <defs>
-                          <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#2354FF" stopOpacity={0.15}/>
-                            <stop offset="95%" stopColor="#2354FF" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                         <XAxis 
                           dataKey="name" 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+                          tick={{ fill: "#94A3B8", fontSize: 8, fontWeight: 800 }}
                           dy={10}
                         />
-                        <YAxis hide />
+                        <YAxis 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: "#94A3B8", fontSize: 8, fontWeight: 800 }}
+                        />
                         <Tooltip 
-                          contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '8px', fontSize: '10px' }} 
                         />
                         <Area 
                           type="monotone" 
                           dataKey="value" 
-                          stroke="#2354FF" 
-                          strokeWidth={4} 
-                          fillOpacity={1} 
-                          fill="url(#colorTrend)" 
+                          stroke="#22C55E" 
+                          strokeWidth={2} 
+                          fillOpacity={0.15} 
+                          fill="#22C55E" 
                         />
                       </AreaChart>
                     </ResponsiveContainer>
-                  )}
-                </div>
-              </Card>
-
-              {/* Competitor Price Monitor */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none shadow-sm rounded-[2rem] bg-white p-6 relative overflow-hidden">
-                   <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-                         <DollarSign className="w-6 h-6" />
-                      </div>
-                      <div>
-                         <h4 className="font-black text-brand-950">Mata-mata Harga</h4>
-                         <p className="text-[10px] text-brand-900/40 font-bold uppercase tracking-widest">Kompetitor Samarinda</p>
-                      </div>
-                   </div>
-                   
-                   <div className="space-y-4">
-                      <div className="flex items-end justify-between">
-                         <p className="text-3xl font-black text-brand-950">Rp {trendData.competitorPricing.average.toLocaleString()}</p>
-                         <Badge className={cn(
-                           "mb-1 px-3 py-1 rounded-lg text-[10px] font-black uppercase",
-                           trendData.competitorPricing.status === "Cheap" ? "bg-green-100 text-green-600" :
-                           trendData.competitorPricing.status === "Fair" ? "bg-blue-100 text-blue-600" : "bg-red-100 text-red-600"
-                         )}>
-                            {trendData.competitorPricing.status === "Cheap" ? "MURAH" : 
-                             trendData.competitorPricing.status === "Fair" ? "KOMPETITIF" : "MAHAL"}
-                         </Badge>
-                      </div>
-                      <p className="text-xs text-brand-900/60 leading-relaxed font-medium">
-                         {trendData.competitorPricing.reasoning}
-                      </p>
-                      <div className="pt-2 border-t border-slate-50 flex justify-between">
-                         <span className="text-[10px] font-bold text-brand-900/30 uppercase tracking-tighter">Min: Rp {trendData.competitorPricing.min.toLocaleString()}</span>
-                         <span className="text-[10px] font-bold text-brand-900/30 uppercase tracking-tighter">Max: Rp {trendData.competitorPricing.max.toLocaleString()}</span>
-                      </div>
-                   </div>
+                  </div>
                 </Card>
+              </div>
 
-                <Card className="border-none shadow-sm rounded-[2rem] bg-white p-6">
-                   <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600">
-                         <Tag className="w-6 h-6" />
-                      </div>
-                      <div>
-                         <h4 className="font-black text-brand-950">Kata Kunci Viral</h4>
-                         <p className="text-[10px] text-brand-900/40 font-bold uppercase tracking-widest">Optimasi Pencarian</p>
-                      </div>
-                   </div>
-                   
-                   <div className="flex flex-wrap gap-2">
-                      {trendData.popularHashtags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="bg-slate-50 text-brand-900/60 border-none hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer rounded-lg text-[10px] font-bold">
-                           {tag}
-                        </Badge>
+              <div className="lg:col-span-4">
+                <Card className="border-none shadow-xl rounded-[1.5rem] md:rounded-[2rem] bg-[#2E68FF] text-white overflow-hidden p-5 md:p-8 h-full relative group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl transition-transform group-hover:scale-110" />
+                  <div className="relative z-10 space-y-4 md:space-y-6">
+                    <div className="flex items-center gap-2 bg-white/20 w-fit px-3 py-1 rounded-full backdrop-blur-md">
+                       <Sparkles size={12} className="text-white" />
+                       <span className="text-[9px] md:text-[10px] font-black tracking-widest uppercase">AI INSIGHT</span>
+                    </div>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-black leading-tight tracking-tight">Saran Strategi UMKM</h3>
+                    
+                    <div className="space-y-3 md:space-y-4">
+                      {trendData.recommendations.slice(0, 3).map((rec, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                           <div className="w-5 h-5 md:w-6 md:h-6 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 text-white font-black text-[9px] md:text-[10px]">
+                              {i + 1}
+                           </div>
+                           <p className="text-[11px] sm:text-xs md:text-sm font-semibold text-white/90 leading-relaxed">{rec}</p>
+                        </div>
                       ))}
-                   </div>
+                    </div>
+                  </div>
                 </Card>
               </div>
-            </div>
 
-            {/* Right Side: AI Golden Insights & Recommendations */}
-            <div className="lg:col-span-4 space-y-6">
-              <Card className="border-none shadow-2xl rounded-[2.5rem] bg-brand-950 text-white overflow-hidden relative">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-600/20 rounded-full blur-3xl" />
-                 
-                 <CardHeader>
-                    <div className="flex items-center gap-2 mb-2">
-                       <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-                          <Sparkles className="w-4 h-4 text-white" />
-                       </div>
-                       <Badge className="bg-brand-600/20 text-brand-400 border-none">AI GOLDEN INSIGHT</Badge>
+              {/* BOTTOM ROW: Price & Keywords */}
+              <div className="lg:col-span-8">
+                <Card className="border-none shadow-xl rounded-[1.5rem] md:rounded-[2rem] bg-[#3EE79B] p-5 md:p-8 h-full relative overflow-hidden group">
+                  <div className="absolute -top-16 -left-16 w-48 h-48 bg-black/5 rounded-full blur-3xl" />
+                  <div className="flex flex-col h-full justify-between gap-6 md:gap-8 relative z-10">
+                    <div>
+                      <Badge className="bg-black/10 text-[#0F172A] border-none px-3 md:px-4 py-1.5 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] flex items-center w-fit gap-2 rounded-full">
+                        <DollarSign size={12} /> Mata-mata Harga
+                      </Badge>
                     </div>
-                    <CardTitle className="text-xl font-bold">Saran Strategi UMKM</CardTitle>
-                    <CardDescription className="text-brand-200/50">Langkah taktis memenangkan pasar</CardDescription>
-                 </CardHeader>
-                 
-                 <CardContent className="space-y-6">
-                    <div className="space-y-6">
-                       <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                          <p className="text-sm text-brand-100 leading-relaxed font-medium italic">
-                             "{trendData.marketInsights[0]}"
-                          </p>
-                       </div>
-                       
-                       <div className="space-y-4">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-brand-400">Rekomendasi Aksi</p>
-                          <div className="space-y-3">
-                             {trendData.recommendations.map((rec, i) => (
-                               <div key={i} className="flex gap-3 items-start group cursor-default">
-                                  <div className="w-6 h-6 rounded-full bg-brand-600/30 flex items-center justify-center flex-shrink-0 text-brand-400 font-black text-[10px]">
-                                     {i + 1}
-                                  </div>
-                                  <p className="text-xs text-brand-100/70 group-hover:text-white transition-colors">{rec}</p>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
-                       
-                       <Button 
-                          onClick={() => handleAnalyze(searchQuery)}
-                          className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-2xl py-7 font-bold text-md shadow-xl shadow-brand-600/20 group"
-                       >
-                          Segarkan Analisis
-                          <RefreshCw className="ml-2 w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-                       </Button>
+                    
+                    <div className="space-y-1">
+                      <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#0F172A] tracking-tighter leading-none break-all">
+                        Rp. {trendData.competitorPricing.average.toLocaleString('id-ID')}
+                      </h2>
                     </div>
-                 </CardContent>
-              </Card>
 
-              {/* Quick Stats Summary */}
-              <div className="space-y-4">
-                 <div className="flex items-center justify-between px-2">
-                    <h4 className="text-sm font-black text-brand-950 uppercase tracking-widest">Status UMKM</h4>
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                 </div>
-                 <div className="p-6 bg-white rounded-[2rem] shadow-sm border border-brand-50 space-y-4">
-                    <div className="flex justify-between items-center">
-                       <span className="text-xs font-medium text-brand-900/40">Loyalitas Pelanggan</span>
-                       <span className="text-xs font-bold text-brand-950">Tinggi (84%)</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
-                       <div className="w-[84%] h-full bg-brand-600" />
-                    </div>
-                    <p className="text-[10px] text-brand-900/40 italic font-medium leading-tight">
-                       *Data ini disinkronkan dengan profil bisnis {profile?.business_name} Anda.
+                    <p className="text-[#0F172A]/70 text-xs sm:text-sm md:text-base font-bold leading-relaxed max-w-2xl">
+                      {trendData.competitorPricing.reasoning || "Berdasarkan analisis real-time pasar Samarinda, harga ini merupakan titik temu kompetitif."}
                     </p>
-                 </div>
+                  </div>
+                </Card>
               </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20 text-center space-y-6"
-          >
-             <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-sm flex items-center justify-center relative">
-                <div className="absolute -top-2 -right-2 w-10 h-10 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-600/30">
-                   <Sparkles className="w-5 h-5 text-white animate-pulse" />
-                </div>
-                <BarChart3 className="w-12 h-12 text-brand-200" />
-             </div>
-             <div className="space-y-2">
-                <h3 className="text-2xl font-black text-brand-950 uppercase tracking-tighter">Siap Menghadapi Pasar?</h3>
-                <p className="text-brand-900/40 font-medium max-w-sm">
-                   Gunakan pencarian di atas untuk mendapatkan laporan intelijen produk Anda di Samarinda.
-                </p>
-             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              <div className="lg:col-span-4">
+                <Card className="border-none shadow-xl rounded-[1.5rem] md:rounded-[2rem] bg-[#FFA93E] p-5 md:p-8 h-full relative overflow-hidden group">
+                  <div className="absolute bottom-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mb-20 blur-3xl transition-transform group-hover:scale-125" />
+                  <div className="relative z-10 space-y-4 md:space-y-6">
+                    <Badge className="bg-black/10 text-[#0F172A] border-none px-3 md:px-4 py-1.5 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] flex items-center w-fit gap-2 rounded-full">
+                      <Tag size={12} /> Kata Kunci Viral
+                    </Badge>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {trendData.popularHashtags.map(tag => (
+                        <span key={tag} className="bg-white/30 backdrop-blur-md hover:bg-white/50 text-[#0F172A] px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-xs font-black transition-all cursor-default shadow-sm uppercase tracking-tight">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
