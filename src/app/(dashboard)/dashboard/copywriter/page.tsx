@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function CopywriterPage() {
   const [productName, setProductName] = useState("");
@@ -48,6 +49,7 @@ export default function CopywriterPage() {
     strategyReasoning: string;
   } | null>(null);
   const [isCalculatingPricing, setIsCalculatingPricing] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   
   const generateFullMarketing = async () => {
     if (!productName || !category) {
@@ -57,10 +59,11 @@ export default function CopywriterPage() {
     
     setIsGenerating(true);
     setIsCalculatingPricing(true);
+    setErrorDetails(null);
     
     try {
       // 1. Generate Caption
-      const captionPromise = fetch("/api/ai/generate-caption", {
+      const captionRes = await fetch("/api/ai/generate-caption", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,10 +73,10 @@ export default function CopywriterPage() {
           targetAudience: "UMKM Customers",
           tone
         }),
-      }).then(res => res.json());
+      });
 
       // 2. Generate Pricing
-      const pricingPromise = fetch("/api/ai/generate-pricing-strategy", {
+      const pricingRes = await fetch("/api/ai/generate-pricing-strategy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,19 +84,21 @@ export default function CopywriterPage() {
           targetMargin: margin,
           competitorPricing: "Market average for " + category
         }),
-      }).then(res => res.json());
+      });
 
-      const [captionData, pricingData] = await Promise.all([captionPromise, pricingPromise]);
+      const captionData = await captionRes.json();
+      const pricingData = await pricingRes.json();
 
-      if (captionData.error) throw new Error(captionData.error);
-      if (pricingData.error) throw new Error(pricingData.error);
+      if (!captionRes.ok) throw new Error(`Caption AI Error: ${captionData.error || "Unknown Error"}`);
+      if (!pricingRes.ok) throw new Error(`Pricing AI Error: ${pricingData.error || "Unknown Error"}`);
 
       setGeneratedContent(captionData);
       setPricingStrategy(pricingData);
       toast.success("Marketing Hub berhasil diperbarui!");
     } catch (error: any) {
       console.error("Error generating content:", error);
-      toast.error(error.message || "Gagal menghasilkan konten");
+      setErrorDetails(error.message);
+      toast.error("Gagal menghasilkan konten. Cek detail error.");
     } finally {
       setIsGenerating(false);
       setIsCalculatingPricing(false);
@@ -106,10 +111,38 @@ export default function CopywriterPage() {
       navigator.clipboard.writeText(fullText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      return fullText;
+    }
+    return "";
+  };
+
+  const shareToInstagram = () => {
+    const text = copyToClipboard();
+    if (text) {
+      toast.success("Caption disalin! Membuka Instagram...");
+      setTimeout(() => {
+        window.open("https://www.instagram.com/", "_blank");
+      }, 1000);
     }
   };
 
   const currentRecommendedPrice = pricingStrategy?.recommendedPrice || (Math.floor(basePrice * (1 + margin/100) / 100) * 100 - 100);
+
+  const formatIDR = (val: number) => {
+    return new Intl.NumberFormat("id-ID").format(val);
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\./g, "");
+    if (rawValue === "") {
+      setBasePrice(0);
+      return;
+    }
+    const numValue = parseInt(rawValue);
+    if (!isNaN(numValue)) {
+      setBasePrice(numValue);
+    }
+  };
 
   return (
     <div className="space-y-8 pb-12">
@@ -124,7 +157,6 @@ export default function CopywriterPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left: Input Section */}
         <div className="lg:col-span-7 space-y-6">
           <Card className="border-none shadow-sm rounded-3xl bg-white overflow-hidden">
             <CardHeader className="bg-slate-50/50 border-b border-brand-50">
@@ -183,13 +215,13 @@ export default function CopywriterPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-bold text-brand-950">Harga Modal (COGS)</label>
-                    <span className="text-xs font-bold text-brand-600">Rp {basePrice.toLocaleString()}</span>
+                    <span className="text-xs font-bold text-brand-600">Rp {formatIDR(basePrice)}</span>
                   </div>
                   <Input 
-                    type="number"
-                    value={basePrice}
-                    onChange={(e) => setBasePrice(parseInt(e.target.value) || 0)}
-                    className="rounded-xl border-brand-100"
+                    type="text"
+                    value={formatIDR(basePrice)}
+                    onChange={handlePriceChange}
+                    className="rounded-xl border-brand-100 font-mono"
                   />
                 </div>
                 <div className="space-y-2">
@@ -256,7 +288,6 @@ export default function CopywriterPage() {
           </Card>
         </div>
 
-        {/* Right: Output Section */}
         <div className="lg:col-span-5 space-y-6">
           <Card className="border-none shadow-sm rounded-3xl bg-white overflow-hidden min-h-[400px] flex flex-col">
             <CardHeader className="bg-slate-50/50 border-b border-brand-50 flex flex-row items-center justify-between">
@@ -305,7 +336,10 @@ export default function CopywriterPage() {
                           </>
                         )}
                       </Button>
-                      <Button className="rounded-xl py-6 bg-brand-950 text-white font-bold hover:bg-brand-900">
+                      <Button 
+                        className="rounded-xl py-6 bg-brand-950 text-white font-bold hover:bg-brand-900"
+                        onClick={shareToInstagram}
+                      >
                         <Instagram className="w-4 h-4 mr-2" />
                         Share ke IG
                       </Button>
@@ -326,7 +360,17 @@ export default function CopywriterPage() {
             </CardContent>
           </Card>
 
-          {/* Pricing Reasoning */}
+          {errorDetails && (
+            <Card className="border-red-100 bg-red-50/50">
+               <CardContent className="p-4 space-y-2">
+                  <p className="text-xs font-bold text-red-600 uppercase tracking-widest">Detail Kegagalan Teknis</p>
+                  <pre className="text-[10px] text-red-500 bg-white p-3 rounded-lg border border-red-100 overflow-x-auto">
+                    {errorDetails}
+                  </pre>
+               </CardContent>
+            </Card>
+          )}
+
           {pricingStrategy && (
             <Card className="border-none shadow-sm rounded-3xl bg-brand-950 text-white overflow-hidden">
                <CardContent className="p-6">

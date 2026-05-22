@@ -57,10 +57,8 @@ export default function DashboardLayout({
                   {[
                     { name: "Dashboard", href: "/dashboard" },
                     { name: "Visualizer AI", href: "/dashboard/visualizer" },
-                    { name: "Smart Copywriter", href: "/dashboard/copywriter" },
+                    { name: "Marketing Hub", href: "/dashboard/copywriter" },
                     { name: "Marketing Calendar", href: "/dashboard/calendar" },
-                    { name: "Trend Analyzer", href: "/dashboard/trends" },
-                    { name: "AI Voice", href: "/dashboard/voice" },
                   ].map((item) => (
                     <Link 
                       key={item.name} 

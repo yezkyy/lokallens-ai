@@ -59,43 +59,37 @@ Return ONLY a JSON object:
   "marketRecommendation": "..."
 }}`,
 
-  TREND_ANALYZER: `Analyze the current market trends for UMKM in Samarinda and Indonesia.
-Focus on: {focusArea}
+  TREND_ANALYZER: `Analisis tren pasar dan harga kompetitor saat ini untuk UMKM di Samarinda, Indonesia.
+Fokus pada produk: {focusArea}
 
-GOALS:
-- Identify popular keywords.
-- Predict trend trajectory.
-- Provide data for a Recharts visualization.
+TUJUAN:
+- Identifikasi kata kunci populer (keywords) dalam bahasa Indonesia/lokal.
+- Prediksi lintasan tren untuk 4 minggu ke depan.
+- Berikan data untuk visualisasi Recharts.
+- Bandingkan estimasi harga kompetitor di Samarinda (misal: jika produk user adalah "Nasi Kuning", berapa kisaran harga tipikal di Samarinda?).
+- Tentukan apakah harga umum (yang akan disediakan atau diestimasi) termasuk "Cheap" (Murah), "Fair" (Wajar), atau "Expensive" (Mahal) untuk pasar Samarinda.
+
+PENTING: Semua teks output (marketInsights, recommendations, reasoning) WAJIB menggunakan Bahasa Indonesia yang santun dan mudah dimengerti UMKM.
 
 OUTPUT FORMAT:
 Return ONLY a JSON object:
 {{
   "trendScore": 0-100,
   "trendChartData": [
-    {{ "name": "Week 1", "value": 10 }},
-    ...
+    {{ "name": "Minggu 1", "value": 10 }},
+    {{ "name": "Minggu 2", "value": 25 }},
+    {{ "name": "Minggu 3", "value": 45 }},
+    {{ "name": "Minggu 4", "value": 30 }}
   ],
   "marketInsights": ["...", "..."],
   "recommendations": ["...", "..."],
-  "popularHashtags": ["...", "..."]
-}}`,
-
-  VOICE_INTENT: `Analyze the following voice transcript from a LokalLens AI user and detect their intent.
-Transcript: "{transcript}"
-
-Supported Intents:
-- visualizer: User wants to enhance product images or see product visualizer.
-- pricing: User wants to check or calculate pricing.
-- caption_generator: User wants to generate captions or copywriting.
-- trends: User wants to see market trends or analytics.
-- calendar: User wants to see the schedule or marketing calendar.
-- dashboard: User wants to go back to the main dashboard.
-
-OUTPUT FORMAT:
-Return ONLY a JSON object:
-{{
-  "intent": "...",
-  "confidence": 0-1,
-  "redirectTo": "/dashboard/..."
+  "popularHashtags": ["...", "..."],
+  "competitorPricing": {{
+    "average": 0,
+    "min": 0,
+    "max": 0,
+    "status": "Cheap | Fair | Expensive",
+    "reasoning": "..."
+  }}
 }}`
 };

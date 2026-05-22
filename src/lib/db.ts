@@ -1,4 +1,8 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
+
+// Force DATE (OID 1082) to be returned as a string instead of a Date object
+// This prevents timezone-related shifting (e.g., 2026-05-22 becoming 2026-05-21)
+types.setTypeParser(1082, (val) => val);
 
 // Menggunakan variable dari .env.local
 const pool = new Pool({

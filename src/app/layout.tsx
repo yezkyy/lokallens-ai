@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LokalLens AI | Futuristic AI for Indonesian UMKM",
+  title: "LokalLens AI | Futuristi  c AI for Indonesian UMKM",
   description: "Empowering Indonesian UMKM with professional AI product visuals, marketing copy, and trend analysis.",
 };
 

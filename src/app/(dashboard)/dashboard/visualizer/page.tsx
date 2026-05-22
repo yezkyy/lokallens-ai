@@ -1,34 +1,49 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Upload, 
-  Image as ImageIcon, 
   Sparkles, 
-  Zap, 
   Download, 
-  Share2, 
   RefreshCw,
-  Layers,
-  Check,
-  Info,
-  Camera
+  Palette,
+  Home,
+  Sun,
+  Type,
+  ImageIcon,
+  CheckCircle2,
+  AlertCircle,
+  Code
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ReactCompareImage from "react-compare-image";
 
-// Mock Themes
-const themes = [
-  { id: "cafe", name: "Modern Café", image: "☕" },
-  { id: "nature", name: "Green Nature", image: "🌿" },
-  { id: "studio", name: "Minimal Studio", image: "📸" },
-  { id: "beach", name: "Summer Beach", image: "🏖️" },
-  { id: "wood", name: "Rustic Wood", image: "🪵" },
-  { id: "abstract", name: "AI Abstract", image: "🎨" },
+const visualStyles = [
+  { id: "Cinematic", name: "Cinematic", icon: "🎬" },
+  { id: "Minimalist", name: "Minimalist", icon: "⚪" },
+  { id: "Vibrant", name: "Vibrant", icon: "🌈" },
+  { id: "Vintage", name: "Vintage", icon: "🎞️" },
+];
+
+const studioStyles = [
+  { id: "Luxury Marble", name: "Marble", icon: "🏛️" },
+  { id: "Modern Cafe", name: "Cafe", icon: "☕" },
+  { id: "Rustic Wood", name: "Wood", icon: "🪵" },
+  { id: "Nature Garden", name: "Garden", icon: "🌿" },
+  { id: "Professional Studio", name: "Studio", icon: "📸" },
+];
+
+const lightingStyles = [
+  { id: "Soft Studio", name: "Soft", icon: "💡" },
+  { id: "Warm Sunlight", name: "Warm", icon: "☀️" },
+  { id: "Neon Purple", name: "Neon", icon: "🔮" },
+  { id: "Natural Window", name: "Natural", icon: "🪟" },
 ];
 
 export default function VisualizerPage() {
@@ -36,11 +51,22 @@ export default function VisualizerPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDone, setIsDone] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState(themes[0].id);
-  const [sliderPosition, setSliderPosition] = useState(50);
+  const [visualStyle, setVisualStyle] = useState(visualStyles[0].id);
+  const [studioStyle, setStudioStyle] = useState(studioStyles[0].id);
+  const [lighting, setLighting] = useState(lightingStyles[0].id);
+  const [customInstruction, setCustomInstruction] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [rawError, setRawError] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -48,369 +74,182 @@ export default function VisualizerPage() {
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
       setResultImage(null);
-      setIsDone(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const selectedFile = e.dataTransfer.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
-      setResultImage(null);
-      setIsDone(false);
+      setRawError(null);
     }
   };
 
   const processImage = async () => {
     if (!file) {
-      toast.error("Silakan unggah foto produk terlebih dahulu");
+      toast.error("Unggah foto produk terlebih dahulu!");
       return;
     }
-
-    setIsProcessing(true);
     
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("theme", selectedTheme);
+    setIsProcessing(true);
+    setRawError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("quality", "standard");
+    formData.append("aspectRatio", "1:1");
+    formData.append("visualStyle", visualStyle);
+    formData.append("studioStyle", studioStyle);
+    formData.append("lighting", lighting);
+    formData.append("customInstruction", customInstruction);
 
+    try {
       const response = await fetch("/api/ai/enhance-product-image", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Gagal memproses gambar");
-      }
-
       const data = await response.json();
       
-      if (data.base64) {
-        setResultImage(`data:${data.mimeType || 'image/png'};base64,${data.base64}`);
-        setIsDone(true);
-        toast.success("Gambar berhasil ditingkatkan!");
+      if (!response.ok) {
+        setRawError(JSON.stringify(data, null, 2));
+        throw new Error(data.error || "Gagal memproses gambar. Cek detail error di bawah.");
+      }
+
+      const finalUrl = data.base64 ? `data:image/png;base64,${data.base64}` : data.url;
+      
+      if (finalUrl) {
+        setResultImage(finalUrl);
+        setCooldown(15);
+        toast.success("Magic Gemini Berhasil!");
+        setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 500);
       } else {
-        throw new Error("Tidak ada gambar yang dihasilkan");
+        setRawError(JSON.stringify(data, null, 2));
+        throw new Error("AI Berhasil tapi tidak ada gambar. Klik 'Debug JSON' untuk melihat isi respon.");
       }
     } catch (error: any) {
-      console.error("Error processing image:", error);
-      toast.error(error.message || "Terjadi kesalahan saat memproses gambar");
+      toast.error(error.message);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const reset = () => {
-    setFile(null);
-    setPreview(null);
-    setResultImage(null);
-    setIsDone(false);
-    setIsProcessing(false);
-  };
-
-  const downloadResult = () => {
-    if (!resultImage) return;
-    const link = document.createElement("a");
-    link.href = resultImage;
-    link.download = `lokallens-enhanced-${Date.now()}.png`;
-    link.click();
-  };
-
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-12 pb-24">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-brand-950 flex items-center gap-3">
-            <Camera className="w-8 h-8 text-brand-600" />
-            AI Background Visualizer
+          <h1 className="text-4xl font-black text-brand-950 flex items-center gap-3">
+            <Sparkles className="w-10 h-10 text-brand-600" />
+            Gemini Visualizer <span className="text-brand-600">2.5</span>
           </h1>
-          <p className="text-brand-900/40 font-medium">Ubah latar belakang produk Anda menjadi profesional secara instan.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge className="bg-brand-50 text-brand-600 border-brand-100 rounded-lg px-3 py-1.5 flex gap-2">
-            <Zap className="w-3.5 h-3.5 fill-current" />
-            <span className="font-bold">12 Kredit Tersisa</span>
-          </Badge>
-          <Button variant="outline" className="rounded-xl border-brand-100">
-            <Info className="w-4 h-4 mr-2" />
-            Bantuan
-          </Button>
+          <p className="text-brand-900/40 font-medium text-lg">Menggunakan Gemini 2.5 Flash Image untuk hasil super realistis.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Editor */}
-        <div className="lg:col-span-8 space-y-6">
-          <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-white min-h-[500px] flex flex-col">
-            <CardContent className="p-0 flex-grow flex flex-col">
-              {!preview ? (
-                /* Upload Area */
-                <div 
-                  className="flex-grow flex flex-col items-center justify-center p-12 cursor-pointer border-4 border-dashed border-brand-50 m-6 rounded-[1.5rem] hover:bg-brand-50/50 hover:border-brand-200 transition-all group"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <div className="w-20 h-20 bg-brand-100 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Upload className="w-10 h-10 text-brand-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-brand-950 mb-2">Unggah Foto Produk</h3>
-                  <p className="text-brand-900/40 text-center max-w-xs mb-8 font-medium">
-                    Seret dan lepas gambar di sini, atau klik untuk memilih file dari komputer Anda.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-4 text-xs font-bold text-brand-900/20 uppercase tracking-widest">
-                    <span>JPG</span>
-                    <span>PNG</span>
-                    <span>WEBP</span>
-                    <span>MAX 10MB</span>
-                  </div>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange} 
-                    className="hidden" 
-                    accept="image/*"
-                  />
-                </div>
-              ) : (
-                /* Editor/Processing Area */
-                <div className="relative flex-grow flex flex-col">
-                  {/* Toolbar */}
-                  <div className="absolute top-4 left-4 right-4 z-20 flex justify-between">
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      className="rounded-full bg-white/80 backdrop-blur-md shadow-sm border-white"
-                      onClick={reset}
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Ganti Foto
-                    </Button>
-                    <div className="flex gap-2">
-                       {isDone && (
-                         <>
-                           <Button 
-                             size="sm" 
-                             className="rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/20"
-                             onClick={downloadResult}
-                           >
-                             <Download className="w-4 h-4 mr-2" />
-                             Simpan HD
-                           </Button>
-                           <Button size="sm" variant="secondary" className="rounded-full bg-white/80 backdrop-blur-md shadow-sm border-white">
-                             <Share2 className="w-4 h-4" />
-                           </Button>
-                         </>
-                       )}
-                    </div>
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden sticky top-24">
+            <CardContent className="p-8 space-y-8">
+              {/* Gaya Visual */}
+              <section className="space-y-4">
+                 <div className="flex items-center gap-2 text-brand-950 font-bold">
+                    <Palette className="w-5 h-5 text-brand-600" />
+                    <h3>Gaya Visual</h3>
+                 </div>
+                 <div className="grid grid-cols-2 gap-2">
+                    {visualStyles.map(s => (
+                      <button key={s.id} onClick={() => setVisualStyle(s.id)} className={cn("flex items-center gap-2 p-3 rounded-xl border-2 transition-all", visualStyle === s.id ? "border-brand-600 bg-brand-50" : "border-slate-50 hover:border-brand-100")}>
+                        <span>{s.icon}</span>
+                        <span className="text-xs font-bold">{s.name}</span>
+                      </button>
+                    ))}
+                 </div>
+              </section>
 
-                  {/* Main Preview */}
-                  <div className="flex-grow flex items-center justify-center bg-slate-50 p-8 relative overflow-hidden min-h-[400px]">
-                    <AnimatePresence mode="wait">
-                      {isProcessing ? (
-                        /* Scanning Effect */
-                        <motion.div 
-                          key="processing"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden shadow-2xl"
-                        >
-                          <img src={preview} alt="Processing" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-brand-600/10" />
-                          <motion.div 
-                            initial={{ top: "0%" }}
-                            animate={{ top: "100%" }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                            className="absolute left-0 right-0 h-1 bg-brand-600 shadow-[0_0_20px_2px_rgba(35,84,255,0.8)] z-10"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 shadow-xl border border-white">
-                               <RefreshCw className="w-5 h-5 text-brand-600 animate-spin" />
-                               <span className="font-bold text-brand-950">AI sedang memproses...</span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ) : isDone && resultImage ? (
-                        /* Before/After Comparison */
-                        <motion.div 
-                          key="done"
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="relative w-full max-w-2xl aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl bg-white"
-                        >
-                          {/* After (With AI Background) */}
-                          <div className="absolute inset-0 bg-brand-50 flex items-center justify-center overflow-hidden">
-                             <img src={resultImage} alt="Result" className="w-full h-full object-cover" />
-                             {/* Theme indicators */}
-                             <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center pointer-events-none">
-                                <Badge className="bg-white/80 backdrop-blur-md text-brand-600 border-white">Tema: {themes.find(t => t.id === selectedTheme)?.name}</Badge>
-                             </div>
-                          </div>
+              {/* Gaya Studio */}
+              <section className="space-y-4">
+                 <div className="flex items-center gap-2 text-brand-950 font-bold">
+                    <Home className="w-5 h-5 text-brand-600" />
+                    <h3>Studio</h3>
+                 </div>
+                 <div className="grid grid-cols-2 gap-2">
+                    {studioStyles.map(s => (
+                      <button key={s.id} onClick={() => setStudioStyle(s.id)} className={cn("flex items-center gap-2 p-3 rounded-xl border-2 transition-all", studioStyle === s.id ? "border-brand-600 bg-brand-50" : "border-slate-50")}>
+                        <span>{s.icon}</span>
+                        <span className="text-xs font-bold">{s.name}</span>
+                      </button>
+                    ))}
+                 </div>
+              </section>
 
-                          {/* Before (Original) Overlay with clipping */}
-                          <div 
-                            className="absolute inset-0 pointer-events-none border-r-2 border-white shadow-xl"
-                            style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-                          >
-                             <img src={preview} alt="Original" className="w-full h-full object-cover grayscale-[0.2] opacity-90" />
-                             <div className="absolute top-6 left-6">
-                                <Badge variant="outline" className="bg-black/20 backdrop-blur-sm text-white border-white/20">ORIGINAL</Badge>
-                             </div>
-                          </div>
+              <Button size="lg" disabled={isProcessing || !file || cooldown > 0} className="w-full h-16 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-brand-600/30" onClick={processImage}>
+                {isProcessing ? <RefreshCw className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                {cooldown > 0 ? `Tunggu ${cooldown}s` : "Transformasikan"}
+              </Button>
 
-                          {/* Slider Control */}
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="100" 
-                            value={sliderPosition} 
-                            onChange={(e) => setSliderPosition(parseInt(e.target.value))}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
-                          />
-                          
-                          {/* Visible Slider Handle */}
-                          <div 
-                            className="absolute inset-y-0 z-20 pointer-events-none"
-                            style={{ left: `${sliderPosition}%` }}
-                          >
-                            <div className="h-full w-1 bg-white shadow-lg relative">
-                               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-brand-50">
-                                  <div className="flex gap-0.5">
-                                     <div className="w-1 h-3 bg-brand-200 rounded-full" />
-                                     <div className="w-1 h-3 bg-brand-200 rounded-full" />
-                                  </div>
-                               </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ) : (
-                        /* Static Preview Before Processing */
-                        <motion.div 
-                          key="preview"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden shadow-xl"
-                        >
-                          <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/5" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Bottom Action Bar */}
-                  {!isDone && !isProcessing && (
-                    <div className="p-6 bg-white border-t border-brand-50 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center">
-                            <Layers className="w-5 h-5 text-brand-600" />
-                         </div>
-                         <div>
-                            <p className="text-sm font-bold text-brand-950">Siap diproses</p>
-                            <p className="text-xs text-brand-900/40">AI akan menghapus background & menambah pencahayaan.</p>
-                         </div>
-                      </div>
-                      <Button 
-                        size="lg" 
-                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-2xl px-8 shadow-xl shadow-brand-600/20 group"
-                        onClick={processImage}
-                      >
-                        Proses Sekarang
-                        <Sparkles className="ml-2 w-5 h-5 group-hover:scale-125 transition-transform" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+              {rawError && (
+                <Button variant="ghost" size="sm" className="w-full text-red-500 hover:bg-red-50 font-mono text-[10px]" onClick={() => console.log(rawError)}>
+                  <Code className="w-3 h-3 mr-2" /> DEBUG JSON ERROR (Check Console)
+                </Button>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Settings & Themes */}
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="border-none shadow-sm rounded-3xl bg-white overflow-hidden">
-            <CardContent className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-bold text-brand-950 mb-4 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-brand-600" />
-                  Pilih Tema Visual
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {themes.map((theme) => (
-                    <button
-                      key={theme.id}
-                      onClick={() => setSelectedTheme(theme.id)}
-                      className={cn(
-                        "p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group",
-                        selectedTheme === theme.id 
-                          ? "border-brand-600 bg-brand-50/50" 
-                          : "border-slate-50 hover:border-brand-200"
-                      )}
-                    >
-                      <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{theme.image}</div>
-                      <p className={cn(
-                        "text-sm font-bold",
-                        selectedTheme === theme.id ? "text-brand-600" : "text-brand-900/60"
-                      )}>
-                        {theme.name}
-                      </p>
-                      {selectedTheme === theme.id && (
-                        <div className="absolute top-2 right-2 w-5 h-5 bg-brand-600 rounded-full flex items-center justify-center">
-                           <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-slate-50">
-                <h3 className="text-sm font-bold text-brand-950 mb-4 uppercase tracking-widest opacity-30">Pengaturan Tambahan</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
-                     <span className="text-sm font-medium text-brand-900/70">Pencahayaan AI</span>
-                     <div className="w-10 h-5 bg-brand-600 rounded-full relative">
-                        <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
-                     </div>
+        <div className="lg:col-span-8 space-y-10">
+          <Card className="border-none shadow-sm rounded-[3rem] bg-white overflow-hidden min-h-[400px] flex items-center justify-center">
+             {!preview ? (
+               <div className="flex flex-col items-center justify-center p-20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  <div className="w-24 h-24 bg-brand-50 rounded-[2.5rem] flex items-center justify-center mb-6">
+                    <Upload className="w-10 h-10 text-brand-600" />
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
-                     <span className="text-sm font-medium text-brand-900/70">HD Upscaling</span>
-                     <div className="w-10 h-5 bg-brand-200 rounded-full relative">
-                        <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full" />
-                     </div>
-                  </div>
+                  <h3 className="text-2xl font-bold text-brand-950">Unggah Foto Produk</h3>
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} hidden accept="image/*" />
+               </div>
+             ) : (
+                <div className="relative p-10">
+                   <div className="w-full max-w-md aspect-square rounded-[2.5rem] overflow-hidden border-[12px] border-slate-50 shadow-2xl">
+                      <img src={preview} className="w-full h-full object-cover" alt="Original" />
+                   </div>
+                   <Badge className="absolute top-14 left-14 bg-white/90 text-brand-600 font-bold">ASLI</Badge>
                 </div>
-              </div>
-
-              <div className="bg-brand-50 p-4 rounded-2xl border border-brand-100">
-                 <p className="text-xs text-brand-900/60 leading-relaxed">
-                   <span className="font-bold text-brand-600">Tips:</span> Untuk hasil terbaik, gunakan foto produk dengan pencahayaan yang cukup dan latar belakang yang kontras.
-                 </p>
-              </div>
-            </CardContent>
+             )}
           </Card>
 
-          {/* Recent Creations */}
-          <div>
-             <h3 className="text-sm font-bold text-brand-950 mb-4 uppercase tracking-widest opacity-30 px-2">Hasil Terakhir</h3>
-             <div className="grid grid-cols-3 gap-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="aspect-square bg-white rounded-xl border border-brand-100 overflow-hidden cursor-pointer hover:scale-105 transition-transform">
-                     <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-slate-300" />
-                     </div>
-                  </div>
-                ))}
+          <AnimatePresence>
+            {(isProcessing || resultImage) && (
+              <motion.div ref={resultRef} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                <Card className="border-none shadow-2xl rounded-[3.5rem] bg-slate-950 overflow-hidden relative">
+                   <CardContent className="p-0 min-h-[600px] flex items-center justify-center">
+                      {isProcessing ? (
+                        <div className="flex flex-col items-center text-white space-y-6">
+                           <div className="relative w-24 h-24">
+                              <div className="absolute inset-0 border-4 border-brand-600 rounded-full border-t-transparent animate-spin" />
+                           </div>
+                           <p className="text-xl font-bold">Gemini 2.5 sedang merancang visual...</p>
+                        </div>
+                      ) : resultImage && (
+                        <div className="w-full h-full p-8 md:p-12">
+                           <div className="rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white/10">
+                              <ReactCompareImage leftImage={preview!} rightImage={resultImage} leftImageLabel="ASLI" rightImageLabel="GEMINI AI" sliderLineWidth={4} handleSize={50} />
+                           </div>
+                           <Button size="lg" className="mt-8 bg-white text-slate-950 rounded-2xl w-full h-16 font-bold" onClick={() => { const link = document.createElement("a"); link.href = resultImage; link.download = "LokalLens-Gemini.png"; link.click(); }}>
+                             <Download className="mr-2" /> Simpan Hasil PRO
+                           </Button>
+                        </div>
+                      )}
+                   </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {rawError && (
+             <div className="p-6 bg-red-50 border border-red-100 rounded-3xl space-y-3">
+                <div className="flex items-center gap-2 text-red-600 font-bold">
+                   <AlertCircle className="w-5 h-5" />
+                   <h4>Detail Kegagalan Teknis</h4>
+                </div>
+                <pre className="p-4 bg-white rounded-xl text-[10px] text-red-400 overflow-x-auto border border-red-50">
+                   {rawError}
+                </pre>
+                <p className="text-xs text-red-900/40 italic">Silakan salin teks merah di atas dan kirimkan ke saya untuk diperbaiki.</p>
              </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

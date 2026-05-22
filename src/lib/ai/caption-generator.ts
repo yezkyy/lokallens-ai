@@ -1,4 +1,3 @@
-import { getModel } from "./gemini";
 import { PROMPTS } from "./prompts";
 
 export interface CaptionInput {
@@ -11,8 +10,12 @@ export interface CaptionInput {
 
 export async function generateCaption(input: CaptionInput) {
   try {
-    const model = getModel("gemini-2.0-flash");
+    const apiKey = process.env.KOBOLLM_API_KEY || process.env.GEMINI_API_KEY;
+    const baseUrl = "https://lite.koboillm.com/v1";
     
+    // Menggunakan gpt-4o-mini untuk jaminan kompatibilitas rute KoboILLM
+    const modelName = "gpt-4o-mini";
+
     const prompt = PROMPTS.CAPTION_GENERATOR
       .replace("{productName}", input.productName)
       .replace("{category}", input.category)
@@ -20,14 +23,29 @@ export async function generateCaption(input: CaptionInput) {
       .replace("{targetAudience}", input.targetAudience)
       .replace("{tone}", input.tone);
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Clean up JSON response if model adds markdown blocks
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" } // Memaksa output JSON
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.detail || result.error?.message || "Gagal generate caption");
+    }
+
+    const text = result.choices[0].message.content;
     const jsonString = text.replace(/```json\n?|\n?```/g, "").trim();
     return JSON.parse(jsonString);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in generateCaption:", error);
     throw error;
   }

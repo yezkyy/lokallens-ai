@@ -74,7 +74,7 @@ export function AuthBranding() {
             { icon: ShoppingBag, title: "AI Visualizer", desc: "Foto Studio Instan" },
             { icon: PenTool, title: "Smart Copy", desc: "Caption Bahasa Lokal" },
             { icon: BarChart3, title: "Trend Analyzer", desc: "Data Pasar Real-time" },
-            { icon: Sparkles, title: "Voice Assistant", desc: "Bantuan AI 24/7" },
+            { icon: Calendar, title: "Smart Scheduler", desc: "Jadwal Posting Otomatis" },
           ].map((feature, i) => (
             <motion.div 
               key={i}
