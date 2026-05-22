@@ -1,11 +1,11 @@
-# 🚀 LokalLens AI - Futuristic AI for Indonesian UMKM
+# 🚀 LokalLens AI - Futuristic AI for Samarinda UMKM
 
-LokalLens AI adalah platform cerdas berbasis Artificial Intelligence yang dirancang khusus untuk memberdayakan UMKM Indonesia. Kami menghadirkan teknologi visualisasi produk kelas dunia, strategi pemasaran terotomatisasi, dan analisis tren pasar real-time dalam satu ekosistem yang futuristik dan mudah digunakan.
+LokalLens AI adalah platform cerdas berbasis Artificial Intelligence yang dirancang khusus untuk memberdayakan UMKM Samarinda. Kami menghadirkan teknologi visualisasi produk kelas dunia, strategi pemasaran terotomatisasi, dan analisis tren pasar real-time dalam satu ekosistem yang futuristik dan mudah digunakan.
 
 ---
 
 ## 👥 Tim Kami: INFORSA NATIVE-DEV
-Platform ini dikembangkan dengan dedikasi penuh untuk kemajuan ekosistem digital UMKM Indonesia.
+Platform ini dikembangkan dengan dedikasi penuh untuk kemajuan ekosistem digital UMKM Samarinda.
 
 ---
 
