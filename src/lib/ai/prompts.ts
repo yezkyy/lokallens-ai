@@ -39,15 +39,17 @@ Return ONLY a JSON object:
   "callToAction": "..."
 }}`,
 
-  PRICING_STRATEGY: `You are a retail pricing strategist. Analyze the following financial data and provide a psychological pricing strategy.
-Modal/Cost: {modalPrice}
+  PRICING_STRATEGY: `Anda adalah pakar strategi harga ritel untuk pasar Indonesia. Analisis data finansial berikut dan berikan strategi harga psikologis (psychological pricing).
+Modal/HPP: {modalPrice}
 Target Margin: {targetMargin}%
-Competitor Pricing: {competitorPricing}
+Harga Kompetitor: {competitorPricing}
 
-GOALS:
-- Use psychological pricing (e.g., charm pricing ending in .900 or .999).
-- Maximize perceived value.
-- Provide competitive positioning.
+TUJUAN:
+- Gunakan harga psikologis yang umum di Indonesia (misal: akhiran .900 atau .500).
+- Maksimalkan nilai persepsi pelanggan.
+- Berikan posisi harga yang kompetitif untuk pasar lokal.
+
+PENTING: Seluruh teks dalam "strategyReasoning" dan "marketRecommendation" WAJIB menggunakan Bahasa Indonesia yang profesional dan persuasif.
 
 OUTPUT FORMAT:
 Return ONLY a JSON object:
